@@ -1,0 +1,33 @@
+name: Goblin Chaos Populator
+description: A GitHub Action that populates a repository with random issues, commits, pull requests, branches, and files. 
+author: Your Name
+inputs:
+  num_issues:
+    description: "Number of issues to create"
+    required: false
+    default: 5
+  num_prs:
+    description: "Number of pull requests to create"
+    required: false
+    default: 5
+  num_commits:
+    description: "Number of commits to create"
+    required: false
+    default: 5
+  num_releases:
+    description: "Number of releases to create"
+    required: false
+    default: 2
+  num_files:
+    description: "Number of files to upload per branch"
+    required: false
+    default: 3
+runs:
+  using: "python"
+  main: "goblin_populator.py"
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  metadata: read
+  actions: read

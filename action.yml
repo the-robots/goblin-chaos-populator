@@ -1,6 +1,6 @@
 name: Goblin Chaos Populator 🐲🔥
 description: Populate your repository with chaotic goblin issues, PRs, commits, releases, and more!
-author: Your Name
+author: melscoop
 inputs:
   num_issues:
     description: "Number of issues to create"
@@ -23,8 +23,15 @@ inputs:
     required: false
     default: 3
 runs:
-  using: "node12"  # Or "node16" depending on the runtime
-  main: "goblin_populator.py"
-branding:
-  icon: "zap"
-  color: "green"
+  using: "composite"
+  steps:
+    - name: Run Python Script
+      shell: bash
+      run: |
+        python3 goblin_populator.py
+      working-directory: ${{ github.action_path }}
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  metadata: read

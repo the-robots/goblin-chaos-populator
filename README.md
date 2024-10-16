@@ -38,21 +38,52 @@ Use this action in your GitHub workflows to populate your repository with goblin
 Create a workflow in `.github/workflows/populate.yml`:
 
 ```yaml
-name: Populate Repo with Chaos
+name: "🔥 Goblins are populating your repo with chaos 🔥"
 
-on: [push]
+on: 
+  workflow_dispatch:
+    inputs:
+      num_issues:
+        description: "Number of issues to create"
+        required: false
+        default: 5
+      num_prs:
+        description: "Number of pull requests to create"
+        required: false
+        default: 5
+      num_commits:
+        description: "Number of commits to create"
+        required: false
+        default: 5
+      num_releases:
+        description: "Number of releases to create"
+        required: false
+        default: 2
+      num_files:
+        description: "Number of files to upload per branch"
+        required: false
+        default: 3
 
 jobs:
   chaos:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write       
+      issues: write          
+      pull-requests: write      
+
     steps:
-      - uses: the-robots/goblin-chaos-populator@v1
+      - name: Run Goblin Chaos Populator
+        uses: the-robots/goblin-chaos-populator@v1.3
         with:
-          num_issues: 3
-          num_prs: 2
-          num_commits: 4
-          num_releases: 1
-          num_files: 2
+          num_issues: ${{ inputs.num_issues }}
+          num_prs: ${{ inputs.num_prs }}
+          num_commits: ${{ inputs.num_commits }}
+          num_releases: ${{ inputs.num_releases }}
+          num_files: ${{ inputs.num_files }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## 🤖 Permissions

@@ -1,5 +1,6 @@
 name: Goblin Chaos Populator 🐲🔥
-description: Let our goblins populate your repository with chaotic issues, PRs, commits, releases, and more!
+description: Populate your repository with chaotic goblin issues, PRs, commits, releases, and more!
+author: Your Name
 inputs:
   num_issues:
     description: "Number of issues to create"
@@ -21,6 +22,9 @@ inputs:
     description: "Number of files to upload per branch"
     required: false
     default: 3
+runs:
+  using: "node12"  # Or "node16" depending on the runtime
+  main: "goblin_populator.py"
 branding:
-  icon: "zap"  # for chaotic energy
-  color: "green"  # Mischievous goblin-like color
+  icon: "zap"
+  color: "green"

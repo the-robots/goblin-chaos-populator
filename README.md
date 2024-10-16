@@ -46,7 +46,7 @@ jobs:
   chaos:
     runs-on: ubuntu-latest
     steps:
-      - uses: your-username/goblin-chaos-populator@v1
+      - uses: the-robots/goblin-chaos-populator@v1
         with:
           num_issues: 3
           num_prs: 2

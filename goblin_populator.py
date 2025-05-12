@@ -75,7 +75,16 @@ def upload_random_file(branch_name):
     response = requests.put(f"{API_URL}/contents/{filename}", headers=HEADERS, json=data)
     print("Goblin File: " + str(response.status_code))
 
-def populate_repo(num_issues, num_prs, num_commits, num_releases, num_files):
+def create_fake_binaries(count, size_kb):
+    print(f"Creating {count} fake binaries of {size_kb}KB each...")
+    os.makedirs("binaries", exist_ok=True)
+    for i in range(count):
+        path = os.path.join("binaries", f"goblin_binary_{i+1}.bin")
+        with open(path, "wb") as f:
+            f.write(os.urandom(size_kb * 1024))
+    print("Goblin Binaries: Done")
+
+def populate_repo(num_issues, num_prs, num_commits, num_releases, num_files, num_binaries, binary_size_kb):
     for _ in range(num_issues):
         create_issue()
         time.sleep(1)
@@ -93,6 +102,9 @@ def populate_repo(num_issues, num_prs, num_commits, num_releases, num_files):
                 upload_random_file(branch_name)
         time.sleep(1)
 
+    if num_binaries > 0:
+        create_fake_binaries(num_binaries, binary_size_kb)
+
 if __name__ == "__main__":
     # Get inputs from the environment
     num_issues = int(os.getenv("INPUT_NUM_ISSUES", 5))
@@ -100,6 +112,9 @@ if __name__ == "__main__":
     num_commits = int(os.getenv("INPUT_NUM_COMMITS", 5))
     num_releases = int(os.getenv("INPUT_NUM_RELEASES", 2))
     num_files = int(os.getenv("INPUT_NUM_FILES", 3))
+    num_binaries = int(os.getenv("INPUT_NUM_BINARIES", 0))
+    binary_size_kb = int(os.getenv("INPUT_BINARY_SIZE_KB", 128))
 
     print("The goblins are populating the repository with chaos...")
-    populate_repo(num_issues, num_prs, num_commits, num_releases, num_files)
+    populate_repo(num_issues, num_prs, num_commits, num_releases, num_files, num_binaries, binary_size_kb)
+

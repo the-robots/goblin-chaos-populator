@@ -38,6 +38,7 @@ Use this action in your GitHub workflows to populate your repository with goblin
 Create a workflow in `.github/workflows/populate.yml`:
 
 ```yaml
+
 name: Populate Repo with Chaos
 
 on: [push]
@@ -53,6 +54,9 @@ jobs:
           num_commits: 4
           num_releases: 1
           num_files: 2
+          num_binaries: 5
+          binary_size_kb: 256
+
 ```
 
 ## 🤖 Permissions

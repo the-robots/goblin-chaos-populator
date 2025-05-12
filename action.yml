@@ -1,11 +1,6 @@
-name: Goblin Chaos Populator 🧌🔥
-description: Populate your repository with chaotic goblin issues, PRs, commits, releases, binaries, and more!
+name: Goblin Chaos Populator 🐲🔥
+description: Populate your repository with chaotic goblin issues, PRs, commits, releases, and more!
 author: melscoop
-
-branding:
-  icon: zap
-  color: orange
-
 inputs:
   num_issues:
     description: "Number of issues to create"
@@ -27,15 +22,6 @@ inputs:
     description: "Number of files to upload per branch"
     required: false
     default: 3
-  num_binaries:
-    description: "Number of binary files to create"
-    required: false
-    default: 0
-  binary_size_kb:
-    description: "Size of each binary file in kilobytes"
-    required: false
-    default: 128
-
 runs:
   using: "composite"
   steps:
@@ -44,10 +30,18 @@ runs:
       run: |
         python3 goblin_populator.py
       working-directory: ${{ github.action_path }}
-
 permissions:
   contents: write
   issues: write
   pull-requests: write
   metadata: read
 
+
+  num_binaries:
+    description: "Number of binary files to create"
+    required: false
+    default: "0"
+  binary_size_kb:
+    description: "Size of each binary file in kilobytes"
+    required: false
+    default: "128"

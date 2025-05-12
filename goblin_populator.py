@@ -4,6 +4,7 @@ import string
 import requests
 import base64
 import time
+import os
 
 # Get the GitHub token and repository information from the environment
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -38,18 +39,7 @@ def create_pr(branch_name):
 
 def create_branch(branch_name):
     ref_response = requests.get(f"{API_URL}/git/ref/heads/main", headers=HEADERS)
-    print("REF GET STATUS:", ref_response.status_code)
-    print("REF RESPONSE:", ref_response.json())
-    if ref_response.status_code != 200:
-        print(f"Failed to get main ref: {ref_response.status_code}")
-        return None
-
-    try:
-        source_sha = ref_response.json()["object"]["sha"]
-    except KeyError:
-        print("Main branch ref JSON missing 'object'")
-        return None
-
+    source_sha = ref_response.json()["object"]["sha"]
     data = {"ref": f"refs/heads/{branch_name}", "sha": source_sha}
     response = requests.post(f"{API_URL}/git/refs", headers=HEADERS, json=data)
     print("Goblin Branch: " + str(response.status_code))
@@ -86,6 +76,7 @@ def upload_random_file(branch_name):
     response = requests.put(f"{API_URL}/contents/{filename}", headers=HEADERS, json=data)
     print("Goblin File: " + str(response.status_code))
 
+
 def create_fake_binaries(count, size_kb):
     print(f"Creating {count} fake binaries of {size_kb}KB each...")
     os.makedirs("binaries", exist_ok=True)
@@ -113,18 +104,16 @@ def populate_repo(num_issues, num_prs, num_commits, num_releases, num_files, num
                 upload_random_file(branch_name)
         time.sleep(1)
 
-    if num_binaries > 0:
-        create_fake_binaries(num_binaries, binary_size_kb)
-
 if __name__ == "__main__":
+    num_binaries = int(os.getenv("INPUT_NUM_BINARIES", 0))
+    binary_size_kb = int(os.getenv("INPUT_BINARY_SIZE_KB", 128))
+
     # Get inputs from the environment
     num_issues = int(os.getenv("INPUT_NUM_ISSUES", 5))
     num_prs = int(os.getenv("INPUT_NUM_PRS", 5))
     num_commits = int(os.getenv("INPUT_NUM_COMMITS", 5))
     num_releases = int(os.getenv("INPUT_NUM_RELEASES", 2))
     num_files = int(os.getenv("INPUT_NUM_FILES", 3))
-    num_binaries = int(os.getenv("INPUT_NUM_BINARIES", 0))
-    binary_size_kb = int(os.getenv("INPUT_BINARY_SIZE_KB", 128))
 
     print("The goblins are populating the repository with chaos...")
     populate_repo(num_issues, num_prs, num_commits, num_releases, num_files, num_binaries, binary_size_kb)

@@ -1,6 +1,6 @@
 # Goblin Chaos Populator 🧙‍♂️🐲
 
-**Goblin Chaos Populator** is a fun and dynamic GitHub Action designed to populate your repository with random chaos! Automate the creation of random issues, pull requests, commits, branches, releases, and files to test workflows, simulate a busy repository, or just add some goblin mischief to your projects.
+**Goblin Chaos Populator** is a fun and dynamic GitHub Action designed to populate your repository with random chaos! Automate the creation of random issues, pull requests, commits, branches, releases, files, and even binary blobs to test workflows, simulate a busy repository, or just add some goblin mischief to your projects.
 
 With customizable inputs, you can specify the number of each element to create, bringing controlled chaos to your repository in seconds. Perfect for **repository stress testing**, **demo repositories**, and **fun experiments**!
 
@@ -14,18 +14,21 @@ With customizable inputs, you can specify the number of each element to create, 
 - **🏷 Branch Creation**: Automatically create branches with unique names for PRs and commits.
 - **🚀 Random Releases**: Publish goblin-themed releases with random version numbers.
 - **📄 Random File Uploads**: Upload random files to newly created branches.
+- **💾 Binary File Generation**: Drop dummy binary files to simulate compiled content.
 
 ---
 
 ## 🔧 Inputs
 
-| Input         | Description                                  | Required | Default |
-|---------------|----------------------------------------------|----------|---------|
-| `num_issues`  | Number of issues to create                   | No       | 5       |
-| `num_prs`     | Number of pull requests to create            | No       | 5       |
-| `num_commits` | Number of commits to create                  | No       | 5       |
-| `num_releases`| Number of releases to create                 | No       | 2       |
-| `num_files`   | Number of files to upload per branch         | No       | 3       |
+| Input             | Description                                  | Required | Default |
+|------------------|----------------------------------------------|----------|---------|
+| `num_issues`      | Number of issues to create                   | No       | 5       |
+| `num_prs`         | Number of pull requests to create            | No       | 5       |
+| `num_commits`     | Number of commits to create                  | No       | 5       |
+| `num_releases`    | Number of releases to create                 | No       | 2       |
+| `num_files`       | Number of files to upload per branch         | No       | 3       |
+| `num_binaries`    | Number of fake binary files to generate      | No       | 0       |
+| `binary_size_kb`  | Size (in kilobytes) of each binary file      | No       | 128     |
 
 ---
 
@@ -37,8 +40,7 @@ Use this action in your GitHub workflows to populate your repository with goblin
 
 Create a workflow in `.github/workflows/populate.yml`:
 
-```yaml
-
+\`\`\`yaml
 name: Populate Repo with Chaos
 
 on: [push]
@@ -56,29 +58,35 @@ jobs:
           num_files: 2
           num_binaries: 5
           binary_size_kb: 256
+\`\`\`
 
-```
+---
 
 ## 🤖 Permissions
 
 This action requires the following permissions to function properly:
 
-```
+\`\`\`
 permissions:
   contents: write
   issues: write
   pull-requests: write
   metadata: read
   actions: read
-```
+\`\`\`
+
+---
 
 ## 🛠 How It Works
 
-- Issues: Random goblin-inspired issues with quirky titles and bodies are created.
-- Pull Requests: New branches are generated with pull requests to merge them into main.
-- Commits: Each new branch contains random commits with goblin content.
-- Releases: Goblin-themed releases are published with fun version numbers.
-- Files: Random files are uploaded to branches with creative content.
+- **Issues**: Random goblin-inspired issues with quirky titles and bodies are created.
+- **Pull Requests**: New branches are generated with pull requests to merge them into main.
+- **Commits**: Each new branch contains random commits with goblin content.
+- **Releases**: Goblin-themed releases are published with fun version numbers.
+- **Files**: Random files are uploaded to branches with creative content.
+- **Binaries**: Fake binary files are created in a `binaries/` folder to simulate compiled code blobs.
+
+---
 
 ## 📥 Installation
 
@@ -87,32 +95,40 @@ permissions:
 3. Commit and push the changes to your repository.
 4. Watch as the goblins bring controlled chaos to your repository!
 
+---
+
 ## 🎯 Use Cases
 
-- Repository Stress Testing: Simulate a busy repository to test workflows and CI/CD pipelines.
-- Demo Repositories: Showcase how your project handles multiple pull requests and commits.
-- Fun Experiments: Add some randomness to your repository for fun or testing.
+- **Repository Stress Testing**: Simulate a busy repository to test workflows and CI/CD pipelines.
+- **Demo Repositories**: Showcase how your project handles multiple pull requests and commits.
+- **Fun Experiments**: Add some randomness to your repository for fun or testing.
+
+---
 
 ## ⚠️ Disclaimer
 
-This action adds random data to your repository. Use with caution, especially on production repositories!
+This action adds random data to your repository. Use with caution, especially on production repositories!  
 Disclaimer: This is not an official GitHub repository or Action!
+
+---
 
 ## 📝 License
 
 This project is licensed under the MIT License.
 
+---
+
 ## 🙌 Contributions
 
 Feel free to fork this repository and submit pull requests with your improvements. Let’s bring even more chaos together!
 
+---
+
 ## 📧 Contact
 
-For any questions or issues submit an issue in this repository. Disclaimer: This is not an official GitHub repository or Action!
+For any questions or issues, submit an issue in this repository.  
+Disclaimer: This is not an official GitHub repository or Action!
+
+---
 
 ## Let the goblins bring some organized chaos to your repository! 🧙‍♂️✨🐲
-
-
-
-
-

@@ -22,6 +22,16 @@ inputs:
     description: "Number of files to upload per branch"
     required: false
     default: 3
+  num_binaries:
+    description: 'Number of binary files to create'
+    required: false
+    default: '0'
+
+  binary_size_kb:
+    description: 'Size of each binary file in kilobytes'
+    required: false
+    default: '128'
+
 runs:
   using: "composite"
   steps:

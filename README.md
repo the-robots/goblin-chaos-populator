@@ -53,7 +53,8 @@ jobs:
           num_commits: 4
           num_releases: 1
           num_files: 2
-```
+          num_binaries: 5
+          binary_size_kb: 256
 
 ## 🤖 Permissions
 

@@ -1,0 +1,76 @@
+From ae8f5f0979c70284c2fcf9274a6c2a2bbd87a4d7 Mon Sep 17 00:00:00 2001
+From: melscoop <melscoop@github.com>
+Date: Mon, 12 May 2025 12:29:00 -0400
+Subject: [PATCH] Add fake binary generation support
+
+---
+ action.yml               | 10 ++++++++++
+ add-binary-support.patch | 35 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 45 insertions(+)
+ create mode 100644 add-binary-support.patch
+
+diff --git a/action.yml b/action.yml
+index 0c15293..4978dec 100644
+--- a/action.yml
++++ b/action.yml
+@@ -22,6 +22,16 @@ inputs:
+     description: "Number of files to upload per branch"
+     required: false
+     default: 3
++  num_binaries:
++    description: 'Number of binary files to create'
++    required: false
++    default: '0'
++
++  binary_size_kb:
++    description: 'Size of each binary file in kilobytes'
++    required: false
++    default: '128'
++
+ runs:
+   using: "composite"
+   steps:
+diff --git a/add-binary-support.patch b/add-binary-support.patch
+new file mode 100644
+index 0000000..a346a59
+--- /dev/null
++++ b/add-binary-support.patch
+@@ -0,0 +1,35 @@
++diff --git a/action.yml b/action.yml
++--- a/action.yml
+++++ b/action.yml
++@@ -1,0 +1,8 @@
+++inputs:
+++  num_binaries:
+++    description: 'Number of binary files to create'
+++    required: false
+++    default: '0'
+++  binary_size_kb:
+++    description: 'Size of each binary file in kilobytes'
+++    required: false
+++    default: '128'
++
++diff --git a/goblin_populator.py b/goblin_populator.py
++--- a/goblin_populator.py
+++++ b/goblin_populator.py
++@@ -1,0 +1,17 @@
+++import os
+++import random
+++
+++def create_fake_binaries(count, size_kb, output_dir):
+++    print(f"Creating {count} fake binaries of {size_kb}KB each")
+++    os.makedirs(output_dir, exist_ok=True)
+++    for i in range(count):
+++        binary_path = os.path.join(output_dir, f"binary_{i+1}.bin")
+++        with open(binary_path, "wb") as f:
+++            f.write(os.urandom(size_kb * 1024))
+++
+++def main():
+++    num_binaries = int(os.getenv("INPUT_NUM_BINARIES", "0"))
+++    binary_size_kb = int(os.getenv("INPUT_BINARY_SIZE_KB", "128"))
+++    if num_binaries > 0:
+++        create_fake_binaries(num_binaries, binary_size_kb, os.path.join(repo_dir, "binaries"))
++
+-- 
+2.39.5 (Apple Git-154)
+

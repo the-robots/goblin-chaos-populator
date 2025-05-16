@@ -30,6 +30,9 @@ runs:
       run: |
         python3 goblin_populator.py
       working-directory: ${{ github.action_path }}
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        
 permissions:
   contents: write
   issues: write

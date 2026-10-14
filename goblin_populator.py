@@ -1,105 +1,239 @@
-import os
-import random
-import string
-import requests
+"""Populate a GitHub repository with opt-in goblin-themed test content."""
+
 import base64
+import json
+import os
+import secrets
+import string
+import sys
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import uuid
 
-# Get the GitHub token and repository information from the environment
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-REPO = os.getenv("GITHUB_REPOSITORY")  # e.g., owner/repo
 
-API_URL = f"https://api.github.com/repos/{REPO}"
-HEADERS = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3+json"
-}
+API_ROOT = "https://api.github.com"
+API_VERSION = "2022-11-28"
 
-def random_string(prefix="goblin-", length=5):
-    return prefix + ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-def create_issue():
-    issue_data = {
-        "title": random_string(prefix="Goblin-Issue-", length=10),
-        "body": "Goblins have raised an issue: " + random_string(length=20),
-    }
-    response = requests.post(f"{API_URL}/issues", headers=HEADERS, json=issue_data)
-    print("Goblin Issue: " + str(response.status_code))
+class GitHubAPIError(RuntimeError):
+    """An unsuccessful request to the GitHub REST API."""
 
-def create_pr(branch_name):
-    pr_data = {
-        "title": random_string(prefix="Goblin-PR-", length=10),
-        "head": branch_name,
-        "base": "main",
-        "body": "This goblin PR comes from the depths of the cave: " + random_string(length=20),
-    }
-    response = requests.post(f"{API_URL}/pulls", headers=HEADERS, json=pr_data)
-    print("Goblin PR: " + str(response.status_code))
 
-def create_branch(branch_name):
-    ref_response = requests.get(f"{API_URL}/git/ref/heads/main", headers=HEADERS)
-    source_sha = ref_response.json()["object"]["sha"]
-    data = {"ref": f"refs/heads/{branch_name}", "sha": source_sha}
-    response = requests.post(f"{API_URL}/git/refs", headers=HEADERS, json=data)
-    print("Goblin Branch: " + str(response.status_code))
-    return branch_name if response.status_code == 201 else None
+class GitHubClient:
+    def __init__(self, token, repository):
+        self.base_url = f"{API_ROOT}/repos/{repository}"
+        self.headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": API_VERSION,
+            "User-Agent": "goblin-chaos-populator",
+        }
 
-def create_commit(branch_name):
+    def request(self, method, path, payload=None):
+        body = None if payload is None else json.dumps(payload).encode("utf-8")
+        request = urllib.request.Request(
+            f"{self.base_url}{path}",
+            data=body,
+            headers=self.headers,
+            method=method,
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                response_body = response.read()
+        except urllib.error.HTTPError as error:
+            details = error.read().decode("utf-8", errors="replace")
+            try:
+                message = json.loads(details).get("message", details)
+            except (json.JSONDecodeError, AttributeError):
+                message = details
+            raise GitHubAPIError(
+                f"GitHub API {method} {path} failed ({error.code}): {message}"
+            ) from error
+        except urllib.error.URLError as error:
+            raise GitHubAPIError(
+                f"GitHub API {method} {path} could not be reached: {error.reason}"
+            ) from error
+
+        if not response_body:
+            return {}
+        try:
+            result = json.loads(response_body)
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise GitHubAPIError(
+                f"GitHub API {method} {path} returned invalid JSON"
+            ) from error
+        if not isinstance(result, dict):
+            raise GitHubAPIError(
+                f"GitHub API {method} {path} returned an unexpected response"
+            )
+        return result
+
+
+def random_string(prefix="goblin-", length=8):
+    alphabet = string.ascii_lowercase + string.digits
+    return prefix + "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def read_count(name, default):
+    raw_value = os.getenv(f"INPUT_{name.upper()}", str(default)).strip()
+    try:
+        value = int(raw_value)
+    except ValueError as error:
+        raise ValueError(
+            f"{name} must be a non-negative integer; got {raw_value!r}"
+        ) from error
+    if value < 0:
+        raise ValueError(f"{name} must be a non-negative integer; got {value}")
+    return value
+
+
+def create_issue(client):
+    issue = client.request(
+        "POST",
+        "/issues",
+        {
+            "title": random_string(prefix="Goblin issue: "),
+            "body": "Goblins have raised an issue: " + random_string(length=20),
+        },
+    )
+    print(f"Created issue: {issue['html_url']}")
+
+
+def create_branch(client, branch_name, base_branch):
+    encoded_base = urllib.parse.quote(base_branch, safe="/")
+    ref = client.request("GET", f"/git/ref/heads/{encoded_base}")
+    client.request(
+        "POST",
+        "/git/refs",
+        {"ref": f"refs/heads/{branch_name}", "sha": ref["object"]["sha"]},
+    )
+
+
+def create_commit(client, branch_name):
+    filename = random_string(prefix="goblin-file-") + ".txt"
     content = "Goblins added some code:\n" + random_string(length=50)
-    filename = random_string(prefix="goblin-file-", length=8) + ".txt"
-    data = {
-        "message": "Goblin commit",
-        "content": base64.b64encode(content.encode()).decode(),
-        "branch": branch_name,
-    }
-    response = requests.put(f"{API_URL}/contents/{filename}", headers=HEADERS, json=data)
-    print("Goblin Commit: " + str(response.status_code))
+    path = "/contents/" + urllib.parse.quote(filename, safe="")
+    client.request(
+        "PUT",
+        path,
+        {
+            "message": "Add goblin chaos",
+            "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+            "branch": branch_name,
+        },
+    )
 
-def create_release():
-    release_data = {
-        "tag_name": f"v{random.randint(1, 100)}.{random.randint(0, 10)}.{random.randint(0, 10)}",
-        "name": random_string(prefix="Goblin-Release-", length=10),
-        "body": "This goblin release contains treasure: " + random_string(length=20),
-    }
-    response = requests.post(f"{API_URL}/releases", headers=HEADERS, json=release_data)
-    print("Goblin Release: " + str(response.status_code))
 
-def upload_random_file(branch_name):
-    filename = random_string(prefix="goblin-attachment-", length=8) + ".txt"
+def upload_random_file(client, branch_name):
+    filename = random_string(prefix="goblin-attachment-") + ".txt"
     content = "This is a random file uploaded by goblins.\n" + random_string(length=100)
-    data = {
-        "message": "Uploading " + filename,
-        "content": base64.b64encode(content.encode()).decode(),
-        "branch": branch_name,
-    }
-    response = requests.put(f"{API_URL}/contents/{filename}", headers=HEADERS, json=data)
-    print("Goblin File: " + str(response.status_code))
+    path = "/contents/" + urllib.parse.quote(filename, safe="")
+    client.request(
+        "PUT",
+        path,
+        {
+            "message": f"Add {filename}",
+            "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+            "branch": branch_name,
+        },
+    )
 
-def populate_repo(num_issues, num_prs, num_commits, num_releases, num_files):
+
+def create_pull_request(client, branch_name, base_branch):
+    pull_request = client.request(
+        "POST",
+        "/pulls",
+        {
+            "title": random_string(prefix="Goblin PR: "),
+            "head": branch_name,
+            "base": base_branch,
+            "body": "This goblin PR comes from the depths of the cave: "
+            + random_string(length=20),
+        },
+    )
+    print(f"Created pull request: {pull_request['html_url']}")
+
+
+def create_release(client, base_branch):
+    tag = f"goblin-{uuid.uuid4().hex[:12]}"
+    release = client.request(
+        "POST",
+        "/releases",
+        {
+            "tag_name": tag,
+            "target_commitish": base_branch,
+            "name": random_string(prefix="Goblin release: "),
+            "body": "This goblin release contains treasure: "
+            + random_string(length=20),
+        },
+    )
+    print(f"Created release: {release['html_url']}")
+
+
+def populate_repo(
+    client, base_branch, num_issues, num_prs, num_commits, num_releases, num_files
+):
     for _ in range(num_issues):
-        create_issue()
+        create_issue(client)
         time.sleep(1)
 
     for _ in range(num_releases):
-        create_release()
+        create_release(client, base_branch)
         time.sleep(1)
 
     for _ in range(num_prs):
-        branch_name = random_string(prefix="goblin-branch-", length=8)
-        if create_branch(branch_name):
-            create_commit(branch_name)
-            create_pr(branch_name)
-            for _ in range(num_files):
-                upload_random_file(branch_name)
+        branch_name = random_string(prefix="goblin-chaos-")
+        create_branch(client, branch_name, base_branch)
+        for _ in range(num_commits):
+            create_commit(client, branch_name)
+        for _ in range(num_files):
+            upload_random_file(client, branch_name)
+        create_pull_request(client, branch_name, base_branch)
         time.sleep(1)
 
-if __name__ == "__main__":
-    # Get inputs from the environment
-    num_issues = int(os.getenv("INPUT_NUM_ISSUES", 5))
-    num_prs = int(os.getenv("INPUT_NUM_PRS", 5))
-    num_commits = int(os.getenv("INPUT_NUM_COMMITS", 5))
-    num_releases = int(os.getenv("INPUT_NUM_RELEASES", 2))
-    num_files = int(os.getenv("INPUT_NUM_FILES", 3))
 
-    print("The goblins are populating the repository with chaos...")
-    populate_repo(num_issues, num_prs, num_commits, num_releases, num_files)
+def main():
+    token = os.getenv("INPUT_GITHUB_TOKEN", "").strip()
+    repository = os.getenv("GITHUB_REPOSITORY", "").strip()
+    if not token:
+        raise ValueError(
+            "github-token is required; pass secrets.GITHUB_TOKEN to the action"
+        )
+    if (
+        not repository
+        or repository.count("/") != 1
+        or any(not part for part in repository.split("/"))
+    ):
+        raise ValueError("GITHUB_REPOSITORY must be set to owner/repository")
+
+    counts = {
+        "num_issues": read_count("num_issues", 5),
+        "num_prs": read_count("num_prs", 5),
+        "num_commits": read_count("num_commits", 1),
+        "num_releases": read_count("num_releases", 2),
+        "num_files": read_count("num_files", 3),
+    }
+    if counts["num_prs"] and not (counts["num_commits"] or counts["num_files"]):
+        raise ValueError("num_prs requires at least one commit or file per pull request branch")
+
+    client = GitHubClient(token, repository)
+    repository_info = client.request("GET", "")
+    base_branch = os.getenv("INPUT_BASE_BRANCH", "").strip() or repository_info.get(
+        "default_branch"
+    )
+    if not base_branch:
+        raise ValueError("Could not determine the repository default branch")
+
+    print(f"Populating {repository} from base branch {base_branch}...")
+    populate_repo(client, base_branch, **counts)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (GitHubAPIError, ValueError, KeyError) as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)

@@ -1,7 +1,14 @@
-name: Goblin Chaos Populator 🐲🔥
-description: Populate your repository with chaotic goblin issues, PRs, commits, releases, and more!
+name: Goblin Chaos Populator
+description: Populate a test repository with goblin-themed issues, pull requests, commits, releases, and files.
 author: melscoop
 inputs:
+  github-token:
+    description: Token used to create repository content. Pass secrets.GITHUB_TOKEN.
+    required: true
+  base_branch:
+    description: Branch to base new branches, pull requests, and releases on. Defaults to the repository's default branch.
+    required: false
+    default: ""
   num_issues:
     description: "Number of issues to create"
     required: false
@@ -11,9 +18,9 @@ inputs:
     required: false
     default: 5
   num_commits:
-    description: "Number of commits to create"
+    description: "Number of commits to create on each pull request branch"
     required: false
-    default: 5
+    default: 1
   num_releases:
     description: "Number of releases to create"
     required: false
@@ -25,16 +32,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Run Python Script
+    - name: Populate repository
       shell: bash
       run: |
         python3 goblin_populator.py
       working-directory: ${{ github.action_path }}
       env:
-        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-        
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  metadata: read
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        INPUT_BASE_BRANCH: ${{ inputs.base_branch }}
+        INPUT_NUM_ISSUES: ${{ inputs.num_issues }}
+        INPUT_NUM_PRS: ${{ inputs.num_prs }}
+        INPUT_NUM_COMMITS: ${{ inputs.num_commits }}
+        INPUT_NUM_RELEASES: ${{ inputs.num_releases }}
+        INPUT_NUM_FILES: ${{ inputs.num_files }}

@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add goblin chaos
-        uses: the-robots/goblin-chaos-populator@v1
+        uses: the-robots/goblin-chaos-populator@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           num_issues: ${{ inputs.num_issues }}
